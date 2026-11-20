@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>藏游戏机 · 手表试玩</title>
+<style>
+  :root { --ink:#4A3428; --muted:#A78D72; --accent:#E8735F; --bg:#FBF4E4; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center;
+         justify-content:center; gap:12px; background:#222226; color:#ddd;
+         font-family:-apple-system,"PingFang SC","Noto Sans CJK SC",sans-serif; padding:16px; }
+  .watch { width:390px; height:450px; border-radius:26px; background:var(--bg); position:relative;
+           overflow:hidden; box-shadow:0 0 0 9px #3a3a40, 0 16px 36px rgba(0,0,0,.5);
+           user-select:none; flex:none; }
+  .screen { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; }
+  .center { justify-content:center; }
+  .hide { display:none !important; }
+
+  /* title */
+  .logo { width:72px; height:72px; margin-top:6px; }
+  h1 { font-size:22px; line-height:1.2; margin:8px 0 0; width:100%; color:var(--ink); text-align:center; }
+  .sub { font-size:12px; color:var(--muted); margin:4px 0 0; }
+  .hero { width:210px; height:74px; margin-top:8px; display:flex; align-items:center; justify-content:space-between; }
+  .heromom { width:70px; height:70px; }
+  .herocon { width:52px; height:52px; }
+  .heroq { font-size:30px; font-weight:700; color:var(--accent); }
+  .rules { width:100%; margin-top:6px; display:flex; flex-direction:column; gap:4px; }
+  .rule { font-size:12px; color:#6B5138; text-align:center; }
+  .btn { width:150px; height:44px; margin-top:10px; border:0; border-radius:26px;
+         background:var(--accent); color:#fff; font-size:17px; font-weight:700; }
+  .btn:active { transform:scale(.97); }
+  .foot { font-size:9px; color:#C3B09C; margin-top:8px; }
+
+  /* play */
+  .hdr { width:94%; height:30px; padding:0 12px; display:flex; align-items:center;
+         justify-content:space-between; flex:none; }
+  .lv { font-size:13px; font-weight:700; color:#5B4331; }
+  .susp { font-size:12px; color:#B0553F; }
+  .scene { position:relative; width:100%; height:62%; flex:none; }
+  .scene img.room { position:absolute; left:0; top:0; width:100%; height:100%; }
+  .hot { position:absolute; background:rgba(255,255,255,0.01); border-radius:10px; }
+  .hot:active { box-shadow:0 0 0 2px rgba(232,115,95,.55) inset; }
+  .nav { position:absolute; top:40%; width:32px; height:32px; border-radius:16px; border:0;
+         background:rgba(60,46,42,.32); color:#FFF7E8; font-size:26px; font-weight:700;
+         line-height:28px; text-align:center; padding:0; }
+  .navl { left:4px; }
+  .navr { right:4px; }
+  .msg { width:94%; height:50px; margin-top:2px; padding:2px 6px; background:#fff;
+         border:1px solid #EBD9C0; border-radius:10px; display:flex; align-items:center;
+         justify-content:center; text-align:center; flex:none; }
+  .msg span { font-size:13px; color:#5B4331; line-height:1.3; }
+  .bar { width:94%; height:40px; display:flex; align-items:center; justify-content:space-between;
+         flex:none; }
+  .bag { display:flex; align-items:center; gap:8px; }
+  .empty { font-size:12px; color:var(--muted); }
+  .chip { display:flex; align-items:center; gap:4px; padding:4px 8px; background:#FFF6E4;
+          border:1px solid #E8D8C0; border-radius:8px; font-size:12px; color:#6B5138; }
+  .chip.on { border-color:var(--accent); background:#FFE9E2; }
+  .chip img { width:18px; height:18px; }
+  .hintbtn { width:56px; height:28px; border:0; border-radius:17px; background:#F4C15D;
+             font-size:13px; font-weight:700; color:#5B4331; }
+
+  /* result */
+  .big { width:90px; height:90px; margin-top:14px; }
+  .fh { font-size:22px; font-weight:700; color:#D9573F; margin-top:14px; }
+  .caugh { color:#B0452F; }
+  .fmsg { width:90%; font-size:13px; color:#5B4331; text-align:center; margin-top:10px; }
+  .winsub { font-size:12px; color:var(--muted); margin-top:8px; }
+  .caption { font-size:12px; color:#888; text-align:center; }
+</style>
+</head>
+<body>
+  <div class="watch" id="watch">
+    <!-- title -->
+    <div class="screen" id="s-title">
+      <img class="logo" src="assets/logo.png" alt="">
+      <h1>妈妈把我的游戏机藏起来了</h1>
+      <p class="sub">房间解谜 · 原创致敬</p>
+      <div class="hero">
+        <img class="heromom" src="assets/mom.png" alt="">
+        <span class="heroq">?</span>
+        <img class="herocon" src="assets/console.png" alt="">
+      </div>
+      <div class="rules">
+        <div class="rule">左右箭头换房间，点物件找线索。</div>
+        <div class="rule">找道具、用道具，别让妈妈起疑心。</div>
+      </div>
+      <button class="btn" onclick="startGame()">开始找</button>
+      <div class="foot">原创美术 · 不含商业游戏素材</div>
+    </div>
+
+    <!-- play -->
+    <div class="screen hide" id="s-play">
+      <div class="hdr"><div class="lv" id="lvl"></div><div class="susp" id="susp"></div></div>
+      <div class="scene" id="scene">
+        <img class="room" id="room" alt="">
+        <button class="nav navl" id="navl" onclick="navRoom(-1)">‹</button>
+        <button class="nav navr" id="navr" onclick="navRoom(1)">›</button>
+      </div>
+      <div class="msg"><span id="msg"></span></div>
+      <div class="bar">
+        <div class="bag" id="bag"></div>
+        <button class="hintbtn" onclick="onHint()">提示</button>
+      </div>
+    </div>
+
+    <!-- found -->
+    <div class="screen center hide" id="s-found">
+      <img class="big" src="assets/console.png" alt="">
+      <div class="fh">找到啦！</div>
+      <div class="fmsg" id="fmsg"></div>
+      <button class="btn" id="nextBtn" onclick="nextLevel()">下一关</button>
+    </div>
+
+    <!-- caught -->
+    <div class="screen center hide" id="s-caught">
+      <img class="big" src="assets/mom.png" alt="">
+      <div class="fh caugh">被妈妈发现了！</div>
+      <div class="fmsg" id="cmsg"></div>
+      <button class="btn" onclick="retry()">再来一次</button>
+    </div>
+
+    <!-- win -->
+    <div class="screen center hide" id="s-win">
+      <img class="big" src="assets/console.png" alt="">
+      <div class="fh" id="wt"></div>
+      <div class="fmsg" id="wm"></div>
+      <div class="winsub" id="ws"></div>
+      <button class="btn" onclick="startGame()">再玩一次</button>
+    </div>
+  </div>
+  <div class="caption">390×450 方屏试玩 · 与手表包同一套关卡/素材（设计稿）</div>
+
+<script src="data.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+let idx = 0, room = 0, phase = 'title', bag = [], selected = '', susp = 0, flags = {};
+let msg = '', lastId = '', lastAt = 0;
+
+const SCREENS = ['s-title','s-play','s-found','s-caught','s-win'];
+function show(id){ SCREENS.forEach(x => $(x).classList.toggle('hide', x !== id)); }
+function suspText(){ let s = '疑心 '; for (let i = 0; i < 3; i++) s += i < susp ? '●' : '○'; return s; }
+
+function startGame(){ loadDay(0); }
+
+function loadDay(i){
+  idx = i; flags = {}; bag = []; selected = ''; susp = 0;
+  msg = '第 ' + (i + 1) + ' 天：妈妈把游戏机藏起来了。';
+  phase = 'play';
+  loadRoom(DAYS[i].room);
+  show('s-play');
+}
+
+function loadRoom(r){
+  room = r;
+  const lv = LEVELS[r];
+  $('lvl').textContent = '第 ' + (idx + 1) + ' 天 · ' + lv.name;
+  $('room').src = 'assets/room' + (r + 1) + '.png';
+  renderScene(lv);
+  renderHud();
+}
+
+function navRoom(d){
+  if (phase !== 'play') return;
+  const n = LEVELS.length;
+  loadRoom((room + d + n) % n);
+  say('你走进了' + LEVELS[room].name + '。');
+}
+
+function renderScene(lv){
+  const sc = $('scene');
+  sc.querySelectorAll('.hot').forEach(n => n.remove());
+  lv.objects.forEach(o => {
+    const h = document.createElement('div');
+    h.className = 'hot';
+    const pad = 10;
+    h.style.left = ((o.x - pad / 2) / 390 * 100) + '%';
+    h.style.top = ((o.y - pad / 2) / 296 * 100) + '%';
+    h.style.width = ((o.s + pad) / 390 * 100) + '%';
+    h.style.height = ((o.s + pad) / 296 * 100) + '%';
+    h.onclick = () => tapObj(o.id);
+    sc.appendChild(h);
+  });
+  sc.appendChild($('navl')); sc.appendChild($('navr'));
+}
+
+function renderHud(){
+  $('susp').textContent = suspText();
+  $('msg').textContent = msg;
+  const b = $('bag'); b.innerHTML = '';
+  if (!bag.length) { const e = document.createElement('div'); e.className = 'empty'; e.textContent = '手上没有东西'; b.appendChild(e); return; }
+  bag.forEach(it => {
+    const c = document.createElement('div');
+    c.className = 'chip' + (selected === it.id ? ' on' : '');
+    c.innerHTML = '<img src="' + it.img.replace('/assets','assets') + '" alt=""><span>' + it.name + '</span>';
+    c.onclick = () => tapItem(it.id);
+    b.appendChild(c);
+  });
+}
+
+function say(t){ msg = t; renderHud(); }
+
+function give(id){
+  if (bag.some(x => x.id === id)) return;
+  bag = bag.concat([ITEMS[id]]);
+}
+
+function sus(n){
+  if (susp >= 3) return;
+  susp = Math.min(3, susp + (n || 1));
+  if (susp >= 3) { caught(); return; }
+  renderHud();
+}
+
+function wrong(t, n){ say(t); sus(n || 1); }
+
+function caught(){
+  $('cmsg').textContent = '妈妈推门进来：你在房间里翻什么呢？';
+  phase = 'caught'; show('s-caught');
+}
+
+function winLevel(t){
+  $('fmsg').textContent = t;
+  $('nextBtn').textContent = idx >= DAYS.length - 1 ? '看看结局' : '下一天';
+  phase = 'found'; show('s-found');
+}
+
+function onHint(){ say(DAYS[idx].hint); }
+
+function tapItem(id){
+  if (phase !== 'play') return;
+  if (selected === id) { selected = ''; say('把手上的东西放了回去。'); return; }
+  selected = id;
+  say('拿起了' + ITEMS[id].name + '，去点点该用的地方。');
+}
+
+function tapObj(id){
+  if (phase !== 'play') return;
+  const now = Date.now();
+  if (id === lastId && now - lastAt < 150) return;
+  lastId = id; lastAt = now;
+  const f = flags, day = idx;
+
+  if (day === 0) {
+    if (id === 'bed') {
+      if (!f.bed) { f.bed = true; give('torch'); say('掀开被子，枕头下有一把手电筒。'); }
+      else say('被子里只剩一只袜子。');
+      return;
+    }
+    if (id === 'basket') {
+      if (!f.key) { f.key = true; give('key'); say('果篮下面压着一把小钥匙。'); }
+      else say('果篮下面只剩几片叶子。');
+      return;
+    }
+    if (id === 'desk') {
+      if (!f.note) { f.note = true; say('抽屉里有张便条：衣柜钥匙在厨房果篮下面。'); }
+      else say('便条上写着：钥匙在厨房果篮下面。');
+      return;
+    }
+    if (id === 'wardrobe') {
+      if (!f.open) {
+        if (selected === 'key') { selected = ''; f.open = true; say('衣柜门开了，里面黑漆漆的。'); }
+        else say('衣柜锁着，需要一把小钥匙。');
+      } else if (!f.light) {
+        if (selected === 'torch') { selected = ''; f.light = true; say('手电照到衣柜顶——游戏机在那儿！'); }
+        else say('衣柜里太黑，得找点光。');
+      } else if (f.chair) winLevel('踩上椅子，从衣柜顶摸到了游戏机！');
+      else say('看见游戏机了，可还够不着。');
+      renderHud(); return;
+    }
+    if (id === 'chair') {
+      if (f.light) { f.chair = true; say('你把椅子拖到了衣柜前。'); }
+      else say('先看看衣柜顶上有什么。');
+      return;
+    }
+    wrong('这里没有游戏机。'); return;
+  }
+
+  if (day === 1) {
+    if (id === 'fridge') {
+      if (!f.ice) { f.ice = true; give('ice'); say('冷冻层里有一盒冰块。'); }
+      else say('只剩冻饺子了。');
+      return;
+    }
+    if (id === 'towel') {
+      if (!f.towel) { f.towel = true; give('towel'); say('你取下毛巾，软软的。'); }
+      else say('毛巾已经拿在手上了。');
+      return;
+    }
+    if (id === 'pot') {
+      if (selected === 'ice') { selected = ''; f.cool = true; say('冰块丢进锅里，汤不烫了。'); }
+      else if (f.cool && !f.console) { f.console = true; say('你从汤底捞出了湿漉漉的游戏机。'); }
+      else if (f.console && selected === 'towel') winLevel('毛巾擦干，游戏机又能开机了！');
+      else if (f.console) say('游戏机还在滴水，得找块毛巾。');
+      else { say('汤太烫，手伸不进去！'); sus(1); }
+      renderHud(); return;
+    }
+    if (id === 'microwave') { wrong('微波炉里是昨晚的剩饭。'); return; }
+    wrong('这里没有游戏机。'); return;
+  }
+
+  if (day === 2) {
+    if (id === 'wateringcan') {
+      if (!f.key) { f.key = true; give('key'); say('浇水壶底下粘着一把小钥匙。'); }
+      else say('壶里只剩半壶水。');
+      return;
+    }
+    if (id === 'outlet') {
+      if (!f.unplug) { f.unplug = true; say('你拔掉插头，滚筒慢慢停了。'); }
+      else say('插头已经拔了。');
+      return;
+    }
+    if (id === 'towel') {
+      if (!f.towel) { f.towel = true; give('towel'); say('你取下毛巾，软软的。'); }
+      else say('毛巾已经拿在手上了。');
+      return;
+    }
+    if (id === 'washer') {
+      if (!f.unplug) { say('滚筒转得飞快，游戏机在里面翻滚！得先让它停。'); sus(1); }
+      else if (!f.open) {
+        if (selected === 'key') { selected = ''; f.open = true; say('舱门开了，游戏机湿透了。'); }
+        else say('舱门锁着，需要一把小钥匙。');
+      } else if (selected === 'towel') winLevel('毛巾擦干，游戏机又能开机了！');
+      else say('游戏机还是湿的，找块毛巾。');
+      renderHud(); return;
+    }
+    wrong('这里没有游戏机。'); return;
+  }
+
+  if (day === 3) {
+    if (id === 'wateringcan') {
+      if (!f.key) { f.key = true; give('key'); say('浇水壶底下粘着一把小钥匙。'); }
+      else say('壶里只剩半壶水。');
+      return;
+    }
+    if (id === 'cabinet') {
+      if (!f.rag) { f.rag = true; give('rag'); say('橱柜里翻出一块旧抹布。'); }
+      else say('橱柜里只剩碗。');
+      return;
+    }
+    if (id === 'toolbox') {
+      if (!f.open) {
+        if (selected === 'key') { selected = ''; f.open = true; say('钥匙插进去，工具箱开了——游戏机沾满机油。'); }
+        else say('工具箱锁着，需要一把小钥匙。');
+      } else if (selected === 'rag') winLevel('抹布一擦，游戏机亮得反光！');
+      else say('游戏机全是机油，得找块布。');
+      renderHud(); return;
+    }
+    wrong('这里没有游戏机。'); return;
+  }
+
+  if (day === 4) {
+    if (id === 'rug') {
+      if (!f.key) { f.key = true; give('key'); say('掀开地毯，一把小钥匙躺在那儿。'); }
+      else say('地毯下面只剩灰。');
+      return;
+    }
+    if (id === 'radio') {
+      if (!f.radio) { f.radio = true; say('收音机放起音乐，妈妈跟着哼歌，转过身去了。'); }
+      else say('音乐还在放。');
+      return;
+    }
+    if (id === 'handbag') {
+      if (!f.radio) { say('妈妈手边就是包，现在伸手会吵醒她。'); sus(1); }
+      else if (selected === 'key') winLevel('钥匙打开小锁，游戏机就在手提包夹层！');
+      else say('包上挂着一把小锁，需要钥匙。');
+      renderHud(); return;
+    }
+    wrong('这里没有游戏机。'); return;
+  }
+}
+
+function nextLevel(){
+  if (idx >= DAYS.length - 1) {
+    $('wt').textContent = ENDING.title;
+    $('wm').textContent = ENDING.msg;
+    $('ws').textContent = ENDING.sub;
+    phase = 'win'; show('s-win'); return;
+  }
+  loadDay(idx + 1);
+}
+
+function retry(){ loadDay(idx); }
+</script>
+</body>
+</html>

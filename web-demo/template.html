@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>藏游戏机 · 手表试玩</title>
+<style>
+  :root { --ink:#4A3428; --muted:#A98C70; --accent:#E06A5A; --bg:#FDF3E3; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center;
+         justify-content:center; gap:14px; background:#222226; color:#ddd;
+         font-family:-apple-system,"PingFang SC","Noto Sans CJK SC",sans-serif; padding:20px; }
+  .watch { width:min(92vw,466px); aspect-ratio:1; border-radius:50%; background:var(--bg);
+           position:relative; overflow:hidden; box-shadow:0 0 0 10px #3a3a40, 0 18px 40px rgba(0,0,0,.5);
+           user-select:none; }
+  .screen { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
+            justify-content:center; padding:34px 30px; text-align:center; }
+  .hide { display:none; }
+  img { image-rendering:auto; }
+  .logo { width:120px; height:120px; margin-bottom:4px; }
+  h1 { font-size:29px; line-height:1.22; margin:0; color:var(--ink); }
+  .sub { font-size:14px; color:var(--muted); margin:10px 0 0; }
+  .btn { margin-top:18px; width:150px; height:48px; border:0; border-radius:14px;
+         background:var(--accent); color:#FFF8EF; font-size:21px; font-weight:700; }
+  .btn:active { transform:scale(.97); }
+  .foot { font-size:11px; color:#C3B09C; margin-top:18px; }
+  .hud { font-size:13px; color:var(--muted); }
+  .tip { font-size:22px; font-weight:700; color:var(--ink); margin-top:2px; }
+  .hint { margin-top:8px; width:100%; max-width:340px; background:#FFF7E8; border:1px solid #F0D9BC;
+          border-radius:10px; padding:6px 10px; font-size:13px; color:#8A5A2E; min-height:38px;
+          display:flex; align-items:center; justify-content:center; }
+  .grid { display:grid; grid-template-columns:repeat(3,108px); gap:6px; margin-top:6px; }
+  .card { width:108px; height:108px; border-radius:16px; border:2px solid #F0DFCB; display:flex;
+          flex-direction:column; align-items:center; justify-content:center; cursor:pointer;
+          transition:transform .08s, background .2s; }
+  .card:active { transform:scale(.95); }
+  .card img { width:54px; height:54px; }
+  .card span { font-size:16px; color:#5A4433; margin-top:2px; }
+  .card.wrong { background:#ECE5DC !important; border-color:#DCD3C8; }
+  .card.wrong span { color:#A99C8E; }
+  .status { margin-top:8px; font-size:13px; color:#7A5C45; min-height:38px; display:flex;
+            align-items:center; justify-content:center; max-width:300px; }
+  .big { width:132px; height:132px; }
+  .fh { font-size:29px; font-weight:700; color:var(--accent); margin:4px 0 0; }
+  .fmsg { font-size:15px; color:#5A4433; margin:6px 0 0; max-width:350px; }
+  .fmom { font-size:13px; color:var(--muted); margin:4px 0 0; }
+  .caption { font-size:12px; color:#888; }
+</style>
+</head>
+<body>
+  <div class="watch" id="watch">
+    <!-- title -->
+    <div class="screen" id="s-title">
+      <img class="logo" src="assets/logo.png" alt="">
+      <h1>妈妈把我的游戏机<br>藏起来了</h1>
+      <p class="sub">原创致敬版 · 在房间里把它找出来</p>
+      <button class="btn" onclick="startGame()">开始找</button>
+      <p class="foot">原创美术 · 不含任何商业游戏素材</p>
+    </div>
+
+    <!-- play -->
+    <div class="screen hide" id="s-play">
+      <div class="hud" id="lvl">第 1 关 · 卧室</div>
+      <div class="tip">轻点物件仔细找</div>
+      <div class="hint" id="hint"></div>
+      <div class="grid" id="grid"></div>
+      <div class="status" id="status"></div>
+    </div>
+
+    <!-- found -->
+    <div class="screen hide" id="s-found">
+      <img class="big" src="assets/console.png" alt="">
+      <div class="fh">找到啦！</div>
+      <p class="fmsg" id="fmsg"></p>
+      <p class="fmom" id="fmom"></p>
+      <button class="btn" id="nextBtn" onclick="nextLevel()">下一关</button>
+    </div>
+
+    <!-- win -->
+    <div class="screen hide" id="s-win">
+      <img class="big" src="assets/console.png" alt="">
+      <div class="fh" id="wt">全部找到！</div>
+      <p class="fmsg" id="wm"></p>
+      <p class="fmom" id="ws"></p>
+      <button class="btn" onclick="startGame()">再玩一次</button>
+    </div>
+  </div>
+  <div class="caption">466×466 圆屏试玩 · 与手表包同一套数据与素材</div>
+
+<script>
+const LEVELS = __LEVELS__;
+const ENDING = __ENDING__;
+const TONES = ['#FFE7C2','#D9EDFF','#E9E0FF','#D8F2E1','#FFE0E4','#FFF6C9'];
+const $ = id => document.getElementById(id);
+let idx = 0, tries = 0, wrong = {}, phase = 'title', lastId = '', lastAt = 0;
+
+function show(id){ ['s-title','s-play','s-found','s-win'].forEach(x => $(x).classList.toggle('hide', x !== id)); }
+
+function startGame(){ enter(0); }
+
+function enter(i){
+  idx = i; tries = 0; wrong = {}; phase = 'play';
+  const lv = LEVELS[i];
+  $('lvl').textContent = '第 ' + (i + 1) + ' 关 · ' + lv.name;
+  $('hint').textContent = '妈妈：仔细看看每一件东西～';
+  $('status').textContent = '妈妈：藏在这间屋里。';
+  render(lv);
+  show('s-play');
+}
+
+function render(lv){
+  const g = $('grid'); g.innerHTML = '';
+  lv.objects.forEach((o, i) => {
+    const card = document.createElement('div');
+    card.className = 'card' + (wrong[o.id] ? ' wrong' : '');
+    card.style.background = TONES[i % TONES.length];
+    card.innerHTML = '<img src="assets/' + o.id + '.png" alt=""><span>' + o.name + '</span>';
+    card.onclick = () => tap(o.id);
+    g.appendChild(card);
+  });
+}
+
+function tap(id){
+  if (phase !== 'play') return;
+  const now = Date.now();
+  if (id === lastId && now - lastAt < 300) return;
+  lastId = id; lastAt = now;
+  const lv = LEVELS[idx];
+  const obj = lv.objects.find(o => o.id === id);
+  if (!obj) return;
+  if (obj.found){
+    phase = 'found';
+    $('fmsg').textContent = lv.findMsg;
+    $('fmom').textContent = lv.momReaction;
+    $('nextBtn').textContent = idx === LEVELS.length - 1 ? '看看结局' : '下一关';
+    show('s-found');
+    return;
+  }
+  wrong[id] = true; tries++;
+  $('status').textContent = obj.wrong;
+  if (tries >= 2) $('hint').textContent = lv.hint;
+  render(lv);
+}
+
+function nextLevel(){
+  if (idx === LEVELS.length - 1){
+    phase = 'win';
+    $('wt').textContent = ENDING.title;
+    $('wm').textContent = ENDING.msg;
+    $('ws').textContent = ENDING.sub;
+    show('s-win');
+  } else enter(idx + 1);
+}
+</script>
+</body>
+</html>

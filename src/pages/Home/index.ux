@@ -1,0 +1,1287 @@
+<template>
+  <div class="app" onswipe="onSwipeBack">
+    <!-- ================= title ================= -->
+    <div class="screen title" if="{{ phase === 'title' }}">
+      <image class="logo" src="/assets/images/logo.png"></image>
+      <text class="h1">妈妈把我的游戏机藏起来了</text>
+      <text class="sub">房间解谜 · 原创致敬</text>
+      <div class="hero">
+        <image class="heromom" src="/assets/images/mom.png"></image>
+        <text class="heroq">?</text>
+        <image class="herocon" src="/assets/images/console.png"></image>
+      </div>
+      <text class="rule">左右箭头换房间，点物件找线索。</text>
+      <text class="rule">找道具、用道具，别让妈妈起疑心。</text>
+      <div class="btn" onclick="onStart">
+        <text class="btnt">开始游戏</text>
+      </div>
+      <div class="btn ghost" onclick="onRandom">
+        <text class="btnt ghostt">随机模式</text>
+      </div>
+      <div class="btn danger" onclick="openHell">
+        <text class="btnt">地狱模式</text>
+      </div>
+      <div class="btn ghost smallbtn" onclick="openSettings">
+        <text class="btnt ghostt smallt">设置</text>
+      </div>
+      <text class="foot">原创美术 · 不含商业游戏素材</text>
+
+      <div class="overlay" if="{{ hellWarn }}">
+        <div class="panel">
+          <image class="warnico" src="/assets/images/warning.png"></image>
+          <text class="warnh">地狱模式</text>
+          <text class="warnt">地狱模式：2 格疑心，每错 2 次涨 1 格（最多错 4 次）；120 秒内通关，解锁全部关卡。</text>
+          <div class="warnbtns">
+            <div class="btn half ghost" onclick="closeHell"><text class="btnt ghostt">取消</text></div>
+            <div class="btn half danger" onclick="startHell"><text class="btnt">开始</text></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="overlay" if="{{ settingsOpen }}">
+        <div class="panel">
+          <text class="warnh">设置</text>
+          <div class="setrow" onclick="toggleVibrate">
+            <text class="setl">点击震动</text>
+            <text class="setv">{{ vibrateOn ? '开' : '关' }}</text>
+          </div>
+          <text class="devline">开发人员：绘0-0</text>
+          <div class="btn" onclick="closeSettings"><text class="btnt">完成</text></div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ================= select ================= -->
+    <div class="screen select" if="{{ phase === 'select' }}">
+      <text class="selh">选关</text>
+      <text class="selhint">通关后解锁下一天</text>
+      <div class="dayrow {{ d.locked ? 'daylock' : '' }}" for="{{ (i, d) in dayItems }}" onclick="onPickDay(i)">
+        <div class="dayno"><text class="daynot">{{ d.no }}</text></div>
+        <div class="daymid">
+          <text class="dayname">{{ d.name }}</text>
+          <text class="dayroom">{{ d.locked ? '通关后解锁' : '进入这一天' }}</text>
+        </div>
+        <image class="daylockico" if="{{ d.locked }}" src="/assets/images/lock.png"></image>
+        <text class="dayarrow" if="{{ !d.locked }}">›</text>
+      </div>
+      <text class="backlink" onclick="backTitle">返回标题</text>
+    </div>
+
+  </div>
+</template>
+
+<style>
+  .app {
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    align-items: center;
+    background-color: #FBF4E4;
+  }
+
+  .screen {
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .center {
+    justify-content: center;
+  }
+
+  /* ---- title ---- */
+  .logo {
+    width: 62px;
+    height: 62px;
+    margin-top: 2px;
+  }
+
+  .h1 {
+    width: 100%;
+    margin-top: 8px;
+    font-size: 22px;
+    font-weight: bold;
+    color: #4A3428;
+    text-align: center;
+  }
+
+  .sub {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #8A6A4E;
+  }
+
+  .hero {
+    width: 210px;
+    height: 54px;
+    margin-top: 8px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .heromom {
+    width: 52px;
+    height: 52px;
+  }
+
+  .herocon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .heroq {
+    font-size: 24px;
+    font-weight: bold;
+    color: #E8735F;
+  }
+
+  .rules {
+    width: 100%;
+    margin-top: 6px;
+    flex-direction: column;
+  }
+
+  .rule {
+    font-size: 11px;
+    color: #6B5138;
+    margin-top: 3px;
+    text-align: center;
+  }
+
+  .btn {
+    width: 150px;
+    height: 40px;
+    margin-top: 6px;
+    border-radius: 26px;
+    background-color: #E8735F;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btnt {
+    font-size: 17px;
+    color: #FFFFFF;
+    font-weight: bold;
+  }
+
+  .foot {
+    margin-top: 8px;
+    font-size: 9px;
+    color: #A78D72;
+  }
+
+
+
+  .title { position: relative; }
+
+  .ghost {
+    background-color: #FFF7E8;
+    border-width: 1px;
+    border-color: #E8735F;
+  }
+
+  .ghostt { color: #C9553D; }
+
+  .danger { background-color: #B33A2B; }
+
+  .smallbtn {
+    width: 120px;
+    height: 30px;
+    margin-top: 5px;
+  }
+
+  .smallt { font-size: 13px; }
+
+  .devline {
+    margin-top: 10px;
+    font-size: 10px;
+    color: #A78D72;
+  }
+
+  .overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(40, 30, 24, 0.55);
+    align-items: center;
+    justify-content: center;
+  }
+
+  .panel {
+    width: 300px;
+    padding: 16px 14px;
+    flex-direction: column;
+    border-radius: 18px;
+    background-color: #FFFDF7;
+    border-width: 1px;
+    border-color: #EBD9C0;
+    align-items: center;
+  }
+
+  .warnico {
+    width: 48px;
+    height: 48px;
+  }
+
+  .warnh {
+    margin-top: 4px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #4A3428;
+  }
+
+  .warnt {
+    margin-top: 6px;
+    width: 250px;
+    font-size: 12px;
+    color: #6B5138;
+    text-align: center;
+    line-height: 18px;
+  }
+
+  .warnbtns {
+    margin-top: 10px;
+    flex-direction: row;
+    justify-content: center;
+  }
+
+  .half {
+    width: 118px;
+    margin-left: 6px;
+    margin-right: 6px;
+  }
+
+  .setrow {
+    width: 240px;
+    height: 44px;
+    margin-top: 10px;
+    padding-left: 14px;
+    padding-right: 14px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #FFF7E8;
+    border-radius: 12px;
+  }
+
+  .setl { font-size: 14px; color: #4A3428; }
+  .setv { font-size: 14px; color: #C9553D; font-weight: bold; }
+
+  /* ---- select ---- */
+  .select {
+    padding-top: 20px;
+    justify-content: flex-start;
+  }
+
+  .selh {
+    font-size: 23px;
+    font-weight: bold;
+    color: #4A3428;
+  }
+
+  .selhint {
+    font-size: 10px;
+    color: #9A7B60;
+    margin-top: 2px;
+    margin-bottom: 8px;
+  }
+
+  .dayrow {
+    width: 86%;
+    height: 46px;
+    flex-direction: row;
+    align-items: center;
+    background-color: #FFFDF7;
+    border-width: 1px;
+    border-color: #EAD9C3;
+    border-radius: 12px;
+    margin-top: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .daylock {
+    background-color: #F0E9DF;
+    border-color: #E0D5C7;
+  }
+
+  .dayno {
+    width: 50px;
+  }
+
+  .daynot {
+    font-size: 10px;
+    color: #A98463;
+  }
+
+  .daymid {
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .dayname {
+    font-size: 14px;
+    color: #4A3428;
+  }
+
+  .dayroom {
+    font-size: 9px;
+    color: #9A7B60;
+    margin-top: 1px;
+  }
+
+  .daylockico {
+    width: 16px;
+    height: 16px;
+  }
+
+  .dayarrow {
+    font-size: 20px;
+    color: #C9553D;
+  }
+
+  .backlink {
+    margin-top: 8px;
+    font-size: 10px;
+    color: #9A7B60;
+  }
+
+  /* ---- play ---- */
+  .hdr {
+    width: 86%;
+    height: 30px;
+    margin-top: 14px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .lv {
+    font-size: 13px;
+    font-weight: bold;
+    color: #5B4331;
+  }
+
+  .susp {
+    font-size: 12px;
+    color: #B0553F;
+  }
+
+  .stagewrap {
+    position: relative;
+    width: 100%;
+    height: 60%;
+  }
+
+  .roomimg {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+  }
+
+  .r0 { background-image: url('/assets/images/room1.png'); }
+  .r1 { background-image: url('/assets/images/room2.png'); }
+  .r2 { background-image: url('/assets/images/room3.png'); }
+  .r3 { background-image: url('/assets/images/room4.png'); }
+  .r4 { background-image: url('/assets/images/room5.png'); }
+
+  .nav {
+    position: absolute;
+    top: 34%;
+    width: 56px;
+    height: 56px;
+    border-radius: 28px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .navl { left: 4px; }
+  .navr { right: 4px; }
+
+  .msg {
+    width: 94%;
+    height: 50px;
+    padding: 2px 6px;
+    margin-top: 2px;
+    background-color: #FFFFFF;
+    border-width: 1px;
+    border-color: #EBD9C0;
+    border-radius: 10px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .msgt {
+    width: 96%;
+    font-size: 13px;
+    color: #5B4331;
+    text-align: center;
+  }
+
+  .bar {
+    width: 94%;
+    height: 40px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .bag {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .emptybag {
+    font-size: 12px;
+    color: #A78D72;
+  }
+
+  .chip {
+    flex-direction: row;
+    align-items: center;
+    padding: 3px 7px;
+    margin-right: 6px;
+    background-color: #FFF6E4;
+    border-width: 1px;
+    border-color: #E8D8C0;
+    border-radius: 8px;
+  }
+
+  .chip-on {
+    border-color: #E8735F;
+    background-color: #FFE9E2;
+  }
+
+  .chipico {
+    width: 20px;
+    height: 20px;
+    margin-right: 4px;
+  }
+
+  .chipt {
+    font-size: 12px;
+    color: #6B5138;
+  }
+
+  .hintbtn {
+    width: 56px;
+    height: 28px;
+    background-color: #F4C15D;
+    border-radius: 17px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hintt {
+    font-size: 13px;
+    color: #5B4331;
+    font-weight: bold;
+  }
+
+  /* ---- result ---- */
+  .bigico {
+    width: 110px;
+    height: 110px;
+    margin-top: 20px;
+  }
+
+  .foundtt {
+    margin-top: 16px;
+    font-size: 27px;
+    font-weight: bold;
+    color: #D9573F;
+  }
+
+  .foundmsg {
+    width: 300px;
+    margin-top: 12px;
+    font-size: 15px;
+    color: #5B4331;
+    text-align: center;
+  }
+
+  .caughtt {
+    margin-top: 16px;
+    font-size: 26px;
+    font-weight: bold;
+    color: #B0452F;
+  }
+
+  .caughtmsg {
+    width: 300px;
+    margin-top: 12px;
+    font-size: 15px;
+    color: #5B4331;
+    text-align: center;
+  }
+
+  .wintt {
+    margin-top: 16px;
+    font-size: 28px;
+    font-weight: bold;
+    color: #4A3428;
+  }
+
+  .winmsg {
+    width: 300px;
+    margin-top: 12px;
+    font-size: 15px;
+    color: #5B4331;
+    text-align: center;
+  }
+
+  .winsub {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #A78D72;
+  }
+</style>
+
+<script>
+import device from '@system.device'
+import storage from '@system.storage'
+import vibrator from '@system.vibrator'
+import router from '@system.router'
+import { LEVELS, ITEMS, DAYS, ENDING, DIFFICULTY } from '../../common/levels.js'
+
+export default {
+  data: {
+    phase: 'title',
+    day: 0,
+    room: 0,
+    roomName: '卧室',
+    levelTag: '第 1 天 · 卧室',
+    levelHint: '',
+    objects: [],
+    roomImg: '/assets/images/room1.png',
+    bag: [],
+    selected: '',
+    msg: '',
+    susp: 0,
+    suspText: '疑心 ○○○',
+    flags: {},
+    foundMsg: '',
+    caughtMsg: '',
+    ending: ENDING,
+    unlocked: 1,
+    dayItems: [],
+    mode: 'story',
+    suspMax: 3,
+    hellWarn: false,
+    settingsOpen: false,
+    vibrateOn: true,
+    rnd: {},
+    hell: {},
+    winTitle: '',
+    winMsg: '',
+    lastTapId: '',
+    lastTapAt: 0
+  },
+
+  onInit() {
+    this.phase = 'title'
+    this.suspText = this.suspLine(0)
+    this.winW = 390
+    this.winH = 450
+    var self = this
+    try {
+      device.getInfo({
+        success: function (res) {
+          if (res.windowWidth) self.winW = res.windowWidth
+          if (res.windowHeight) self.winH = res.windowHeight
+        }
+      })
+    } catch (err) {}
+    try {
+      storage.get({
+        key: 'hidden_vibrate',
+        success: function (res) {
+          var v = (res && res.data !== undefined) ? res.data : res
+          self.vibrateOn = String(v) !== '0'
+        }
+      })
+    } catch (err) {}
+    try {
+      storage.get({
+        key: 'hidden_unlocked',
+        success: function (res) {
+          var v = (res && res.data !== undefined) ? res.data : res
+          var n = parseInt(v, 10)
+          if (n >= 1 && n <= 5) self.unlocked = n
+          if (self.phase === 'select') self.openSelect()
+        }
+      })
+    } catch (err) {}
+  },
+
+  onShow() {
+    var self = this
+    try {
+      storage.get({
+        key: 'hidden_unlocked',
+        success: function (res) {
+          var v = (res && res.data !== undefined) ? res.data : res
+          var n = parseInt(v, 10)
+          if (n >= 1 && n <= 5) self.unlocked = n
+          if (self.phase === 'select') self.openSelect()
+        }
+      })
+    } catch (err) {}
+  },
+
+  /* ---------- helpers ---------- */
+  suspLine(n) {
+    var s = '疑心 '
+    var i
+    var m = this.suspMax || 3
+    for (i = 0; i < m; i++) s += i < n ? '●' : '○'
+    return s
+  },
+
+  buzz() {
+    if (!this.vibrateOn) return
+    try { vibrator.vibrate({ mode: 'short' }) } catch (err) {}
+  },
+
+  say(text) {
+    this.msg = text
+  },
+
+  give(id) {
+    var def = ITEMS[id]
+    var i
+    for (i = 0; i < this.bag.length; i++) {
+      if (this.bag[i].id === id) return
+    }
+    this.bag = this.bag.concat([def])
+  },
+
+  sus(n) {
+    var max = this.suspMax || 3
+    if (this.susp >= max) return
+    this.susp = Math.min(max, this.susp + (n || 1))
+    this.suspText = this.suspLine(this.susp)
+    if (this.susp >= max) {
+      this.caughtMsg = '妈妈推门进来：你在房间里翻什么呢？'
+      this.phase = 'caught'
+    }
+  },
+
+  wrong(text, n) {
+    this.say(text)
+    this.sus(n || 1)
+  },
+
+  winLevel(text) {
+    this.foundMsg = text
+    if (this.mode === 'hell') {
+      this.unlocked = DAYS.length
+      this.saveProgress()
+      this.foundMsg = text + ' 地狱模式通关，全部关卡已解锁！'
+    } else if (this.mode === 'story' && this.day + 2 > this.unlocked && this.day + 1 < DAYS.length) {
+      this.unlocked = this.day + 2
+      this.saveProgress()
+    }
+    this.phase = 'found'
+  },
+
+  /* ---------- navigation ---------- */
+  onStart() {
+    this.mode = 'story'
+    this.openSelect()
+  },
+
+  onRandom() {
+    this.startGame('random', 0)
+  },
+
+  openRandom() {
+    this.startGame('random', 0)
+  },
+
+  onSwipeBack(e) {
+    var d = e && e.direction
+    if (d === 'left' || d === 'right') {
+      if (this.phase === 'select') this.phase = 'title'
+    }
+  },
+
+  onBackPress() {
+    if (this.hellWarn) { this.hellWarn = false; return true }
+    if (this.settingsOpen) { this.settingsOpen = false; return true }
+    if (this.phase === 'select') { this.phase = 'title'; return true }
+    return false
+  },
+
+  openHell() {
+    this.hellWarn = true
+  },
+
+  closeHell() {
+    this.hellWarn = false
+  },
+
+  startHell() {
+    this.hellWarn = false
+    this.startGame('hell', 0)
+  },
+
+  openSettings() {
+    this.settingsOpen = true
+  },
+
+  closeSettings() {
+    this.settingsOpen = false
+  },
+
+  toggleVibrate() {
+    this.vibrateOn = !this.vibrateOn
+    try { storage.set({ key: 'hidden_vibrate', value: this.vibrateOn ? '1' : '0' }) } catch (err) {}
+    if (this.vibrateOn) this.buzz()
+  },
+
+  openSelect() {
+    var items = []
+    for (var i = 0; i < DAYS.length; i++) {
+      items.push({
+        no: '第 ' + (i + 1) + ' 天',
+        name: LEVELS[DAYS[i].room].name,
+        locked: i >= this.unlocked
+      })
+    }
+    this.dayItems = items
+    this.phase = 'select'
+  },
+
+  startGame(mode, day) {
+    var self = this
+    var payload = JSON.stringify({ mode: mode, day: day || 0 })
+    var go = function () { router.push({ uri: '/pages/Game' }) }
+    try {
+      storage.set({
+        key: 'hidden_session',
+        value: payload,
+        success: go,
+        fail: go
+      })
+    } catch (err) { go() }
+  },
+
+  onPickDay(i) {
+    if (i >= this.unlocked) return
+    this.startGame('story', i)
+  },
+
+  backTitle() {
+    this.phase = 'title'
+  },
+
+  saveProgress() {
+    try {
+      storage.set({ key: 'hidden_unlocked', value: String(this.unlocked) })
+    } catch (err) {}
+  },
+
+  loadDay(i) {
+    var d = DAYS[i]
+    this.mode = 'story'
+    this.day = i
+    this.suspMax = DIFFICULTY[i] || 3
+    this.flags = {}
+    this.bag = []
+    this.selected = ''
+    this.susp = 0
+    this.suspText = this.suspLine(0)
+    this.foundMsg = ''
+    this.caughtMsg = ''
+    this.loadRoom(d.room)
+    this.msg = '第 ' + (i + 1) + ' 天：妈妈把游戏机藏起来了。'
+    this.phase = 'play'
+  },
+
+  loadRoom(r) {
+    var room = LEVELS[r]
+    this.room = r
+    this.roomName = room.name
+    this.roomImg = '/assets/images/room' + (r + 1) + '.png'
+    this.objects = room.objects.map(function (o) {
+      var pad = 10
+      return {
+        id: o.id, name: o.name, img: o.img,
+        x: o.x, y: o.y, s: o.s,
+        hx: (o.x - pad / 2) / 390 * 100,
+        hy: (o.y - pad / 2) / 296 * 100,
+        hw: (o.s + pad) / 390 * 100,
+        hh: (o.s + pad) / 296 * 100
+      }
+    })
+    if (this.mode === 'story') this.levelTag = '第 ' + (this.day + 1) + ' 天 · ' + this.roomName
+    else if (this.mode === 'hell') this.levelTag = '地狱 · ' + this.roomName
+    else this.levelTag = '随机 · ' + this.roomName
+    this.levelHint = this.mode === 'story' ? DAYS[this.day].hint : '' 
+  },
+
+  navRoom(delta) {
+    if (this.phase !== 'play') return
+    var n = LEVELS.length
+    this.loadRoom((this.room + delta + n) % n)
+    this.say('你走进了' + this.roomName + '。')
+  },
+
+  onNext() {
+    if (this.mode !== 'story' || this.day >= DAYS.length - 1) {
+      this.winTitle = this.mode === 'hell' ? '地狱通关！' : (this.mode === 'random' ? '随机模式通关！' : ENDING.title)
+      this.winMsg = this.mode === 'story' ? ENDING.msg : '妈妈叹了口气：「就玩十分钟哦。」'
+      this.phase = 'win'
+      return
+    }
+    this.loadDay(this.day + 1)
+  },
+
+  onRetry() {
+    if (this.mode === 'hell') this.buildHell()
+    else if (this.mode === 'random') this.startRandom()
+    else this.loadDay(this.day)
+  },
+
+  onRestart() {
+    this.mode = 'story'
+    this.openSelect()
+  },
+
+  onHint() {
+    if (this.mode === 'random') {
+      this.say('随机模式：游戏机在「' + this.rnd.targetRoomName + '」，需要' + (ITEMS[this.rnd.toolId] || {}).name + '。')
+      return
+    }
+    if (this.mode === 'hell') {
+      this.say('地狱模式：先找钥匙，再开厨房橱柜，最后用抹布。')
+      return
+    }
+    this.say(DAYS[this.day].hint)
+  },
+
+  onTapItem(id) {
+    if (this.phase !== 'play') return
+    if (this.selected === id) {
+      this.selected = ''
+      this.say('把手上的东西放了回去。')
+      return
+    }
+    this.selected = id
+    this.say('拿起了' + ITEMS[id].name + '，去点点该用的地方。')
+  },
+
+  /* ---------- room taps ---------- */
+  onSceneTap(e) {
+    if (this.phase !== 'play') return
+    this.buzz()
+    var now = Date.now()
+    if (now - (this.lastSceneTap || 0) < 350) return
+    this.lastSceneTap = now
+
+    var t = (e && e.touches && e.touches[0]) || (e && e.changedTouches && e.changedTouches[0]) || e || {}
+    var ox = t.clientX
+    var oy = t.clientY
+    if (ox === undefined || ox === null || oy === undefined || oy === null) return
+
+    // scene starts at 44px (header 14 margin + 30 height)
+    var px = ox / this.winW * 390
+    var py = (oy - 44) / (this.winH * 0.6) * 296
+    if (px < 0) px = 0
+    if (px > 390) px = 390
+    if (py < 0) py = 0
+    if (py > 296) py = 296
+    var list = this.objects
+    var hit = null
+    for (var i = 0; i < list.length; i++) {
+      var o = list[i]
+      var l = o.x - 14
+      var r = o.x + o.s + 14
+      var u = o.y - 14
+      var d = o.y + o.s + 14
+      if (px >= l && px <= r && py >= u && py <= d) { hit = o; break }
+    }
+    if (hit) {
+      this.onTapObj(hit.id)
+    } else {
+      var lines = ['这里是墙，什么都没有。', '只是房间的摆设。', '妈妈不会把游戏机藏在这种地方吧？']
+      this.say(lines[Math.floor(Math.random() * lines.length)])
+    }
+  },
+
+
+  /* ---------- random / hell ---------- */
+  findObjectRoom(id) {
+    for (var r = 0; r < LEVELS.length; r++) {
+      var objs = LEVELS[r].objects
+      for (var i = 0; i < objs.length; i++) {
+        if (objs[i].id === id) return r
+      }
+    }
+    return -1
+  },
+
+  startRandom() {
+    this.mode = 'random'
+    this.suspMax = 4
+    this.flags = {}
+    this.bag = []
+    this.selected = ''
+    this.susp = 0
+    this.suspText = this.suspLine(0)
+    this.foundMsg = ''
+    this.caughtMsg = ''
+    var pool = [
+      { tool: 'key', obj: 'basket' },
+      { tool: 'torch', obj: 'bed' },
+      { tool: 'ice', obj: 'fridge' },
+      { tool: 'towel', obj: 'towel' },
+      { tool: 'rag', obj: 'cabinet' }
+    ]
+    var tr = Math.floor(Math.random() * LEVELS.length)
+    var objs = LEVELS[tr].objects
+    var target = objs[Math.floor(Math.random() * objs.length)]
+    var pick = pool[Math.floor(Math.random() * pool.length)]
+    var guard = 0
+    while (pick.obj === target.id && guard < 8) {
+      pick = pool[Math.floor(Math.random() * pool.length)]
+      guard++
+    }
+    var toolRoom = this.findObjectRoom(pick.obj)
+    this.rnd = {
+      targetId: target.id,
+      targetName: target.name,
+      targetRoom: tr,
+      targetRoomName: LEVELS[tr].name,
+      toolId: pick.tool,
+      toolName: ITEMS[pick.tool].name,
+      toolObjId: pick.obj,
+      toolRoom: toolRoom,
+      got: false
+    }
+    this.say('随机模式：游戏机藏在某处，先找到' + this.rnd.toolName + '。')
+    this.phase = 'play'
+    this.loadRoom(tr)
+  },
+
+  tapRandom(id) {
+    var r = this.rnd
+    if (id === r.toolObjId && !r.got) {
+      r.got = true
+      this.rnd = r
+      this.give(r.toolId)
+      this.say('找到了' + r.toolName + '，点一下道具，再用它。')
+      return
+    }
+    if (id === r.targetId) {
+      if (this.selected === r.toolId) {
+        this.selected = ''
+        this.winLevel('用' + r.toolName + '一弄，游戏机就到手了！')
+      } else {
+        this.say('游戏机就藏在这里，但需要' + r.toolName + '。')
+      }
+      return
+    }
+    this.wrong('只是房间的摆设。', 1)
+  },
+
+  buildHell() {
+    this.mode = 'hell'
+    this.suspMax = 2
+    this.flags = {}
+    this.bag = []
+    this.selected = ''
+    this.susp = 0
+    this.suspText = this.suspLine(0)
+    this.foundMsg = ''
+    this.caughtMsg = ''
+    var rooms = [0, 2, 3, 4]
+    var tr = rooms[Math.floor(Math.random() * rooms.length)]
+    var objs = LEVELS[tr].objects
+    var target = objs[Math.floor(Math.random() * objs.length)]
+    this.hell = {
+      targetId: target.id,
+      targetName: target.name,
+      targetRoom: tr,
+      targetRoomName: LEVELS[tr].name,
+      hasKey: false,
+      hasRag: false,
+      cabinetOpen: false
+    }
+    this.say('地狱模式：全屋只有一个游戏机，错一步就会被发现。')
+    this.phase = 'play'
+    this.loadRoom(1)
+    this.say('先从厨房开始找线索。')
+  },
+
+  tapHell(id) {
+    var h = this.hell
+    if (id === 'basket') {
+      if (!h.hasKey) {
+        h.hasKey = true
+        this.hell = h
+        this.give('key')
+        this.say('果篮下面有一把小钥匙。')
+      } else this.say('果篮下面已经空了。')
+      return
+    }
+    if (id === 'cabinet') {
+      if (!h.hasKey) {
+        this.say('橱柜锁着，需要钥匙。')
+        return
+      }
+      if (!h.cabinetOpen) {
+        h.cabinetOpen = true
+        h.hasRag = true
+        this.hell = h
+        this.give('rag')
+        this.say('柜子里翻出一块抹布，点一下抹布再用。')
+      } else this.say('柜子里只剩碗了。')
+      return
+    }
+    if (id === h.targetId) {
+      if (this.selected === 'rag') {
+        this.selected = ''
+        this.winLevel('抹布一擦，游戏机终于露出来了！')
+      } else this.say('游戏机就藏在这里，可上面全是灰，需要抹布。')
+      return
+    }
+    this.wrong('不是这里，妈妈已经起疑了。', 1)
+  },
+
+  onTapObj(id) {
+    if (this.phase !== 'play') return
+    var now = Date.now()
+    if (id === this.lastTapId && now - this.lastTapAt < 300) return
+    this.lastTapId = id
+    this.lastTapAt = now
+    if (this.mode === 'random') return this.tapRandom(id)
+    if (this.mode === 'hell') return this.tapHell(id)
+
+    var f = this.flags
+    var day = this.day
+
+    if (day === 0) {
+      if (id === 'bed') {
+        if (!f.bed) {
+          f.bed = true
+          this.flags = f
+          this.give('torch')
+          this.say('掀开被子，枕头下有一把手电筒。')
+        } else this.say('被子里只剩一只袜子。')
+        return
+      }
+      if (id === 'basket') {
+        if (!f.key) {
+          f.key = true
+          this.flags = f
+          this.give('key')
+          this.say('果篮下面压着一把小钥匙。')
+        } else this.say('果篮下面只剩几片叶子。')
+        return
+      }
+      if (id === 'desk') {
+        if (!f.note) {
+          f.note = true
+          this.flags = f
+          this.say('抽屉里有张便条：衣柜钥匙在厨房果篮下面。')
+        } else this.say('便条上写着：钥匙在厨房果篮下面。')
+        return
+      }
+      if (id === 'wardrobe') {
+        if (!f.open) {
+          if (this.selected === 'key') {
+            this.selected = ''
+            f.open = true
+            this.flags = f
+            this.say('衣柜门开了，里面黑漆漆的。')
+          } else this.say('衣柜锁着，需要一把小钥匙。')
+        } else if (!f.light) {
+          if (this.selected === 'torch') {
+            this.selected = ''
+            f.light = true
+            this.flags = f
+            this.say('手电照到衣柜顶——游戏机在那儿！')
+          } else this.say('衣柜里太黑，得找点光。')
+        } else if (f.chair) {
+          this.winLevel('踩上椅子，从衣柜顶摸到了游戏机！')
+        } else this.say('看见游戏机了，可还够不着。')
+        return
+      }
+      if (id === 'chair') {
+        if (f.light) {
+          f.chair = true
+          this.flags = f
+          this.say('你把椅子拖到了衣柜前。')
+        } else this.say('先看看衣柜顶上有什么。')
+        return
+      }
+      return this.wrong('这里没有游戏机。')
+    }
+
+    if (day === 1) {
+      if (id === 'fridge') {
+        if (!f.ice) {
+          f.ice = true
+          this.flags = f
+          this.give('ice')
+          this.say('冷冻层里有一盒冰块。')
+        } else this.say('只剩冻饺子了。')
+        return
+      }
+      if (id === 'towel') {
+        if (!f.towel) {
+          f.towel = true
+          this.flags = f
+          this.give('towel')
+          this.say('你取下毛巾，软软的。')
+        } else this.say('毛巾已经拿在手上了。')
+        return
+      }
+      if (id === 'pot') {
+        if (this.selected === 'ice') {
+          this.selected = ''
+          f.cool = true
+          this.flags = f
+          this.say('冰块丢进锅里，汤不烫了。')
+        } else if (f.cool && !f.console) {
+          f.console = true
+          this.flags = f
+          this.say('你从汤底捞出了湿漉漉的游戏机。')
+        } else if (f.console && this.selected === 'towel') {
+          this.winLevel('毛巾擦干，游戏机又能开机了！')
+        } else if (f.console) {
+          this.say('游戏机还在滴水，得找块毛巾。')
+        } else {
+          this.say('汤太烫，手伸不进去！')
+          this.sus(1)
+        }
+        return
+      }
+      if (id === 'microwave') return this.wrong('微波炉里是昨晚的剩饭。', 1)
+      return this.wrong('这里没有游戏机。')
+    }
+
+    if (day === 2) {
+      if (id === 'wateringcan') {
+        if (!f.key) {
+          f.key = true
+          this.flags = f
+          this.give('key')
+          this.say('浇水壶底下粘着一把小钥匙。')
+        } else this.say('壶里只剩半壶水。')
+        return
+      }
+      if (id === 'outlet') {
+        if (!f.unplug) {
+          f.unplug = true
+          this.flags = f
+          this.say('你拔掉插头，滚筒慢慢停了。')
+        } else this.say('插头已经拔了。')
+        return
+      }
+      if (id === 'towel') {
+        if (!f.towel) {
+          f.towel = true
+          this.flags = f
+          this.give('towel')
+          this.say('你取下毛巾，软软的。')
+        } else this.say('毛巾已经拿在手上了。')
+        return
+      }
+      if (id === 'washer') {
+        if (!f.unplug) {
+          this.say('滚筒转得飞快，游戏机在里面翻滚！得先让它停。')
+          this.sus(1)
+        } else if (!f.open) {
+          if (this.selected === 'key') {
+            this.selected = ''
+            f.open = true
+            this.flags = f
+            this.say('舱门开了，游戏机湿透了。')
+          } else this.say('舱门锁着，需要一把小钥匙。')
+        } else if (this.selected === 'towel') {
+          this.winLevel('毛巾擦干，游戏机又能开机了！')
+        } else this.say('游戏机还是湿的，找块毛巾。')
+        return
+      }
+      return this.wrong('这里没有游戏机。')
+    }
+
+    if (day === 3) {
+      if (id === 'wateringcan') {
+        if (!f.key) {
+          f.key = true
+          this.flags = f
+          this.give('key')
+          this.say('浇水壶底下粘着一把小钥匙。')
+        } else this.say('壶里只剩半壶水。')
+        return
+      }
+      if (id === 'cabinet') {
+        if (!f.rag) {
+          f.rag = true
+          this.flags = f
+          this.give('rag')
+          this.say('橱柜里翻出一块旧抹布。')
+        } else this.say('橱柜里只剩碗。')
+        return
+      }
+      if (id === 'toolbox') {
+        if (!f.open) {
+          if (this.selected === 'key') {
+            this.selected = ''
+            f.open = true
+            this.flags = f
+            this.say('钥匙插进去，工具箱开了——游戏机沾满机油。')
+          } else this.say('工具箱锁着，需要一把小钥匙。')
+        } else if (this.selected === 'rag') {
+          this.winLevel('抹布一擦，游戏机亮得反光！')
+        } else this.say('游戏机全是机油，得找块布。')
+        return
+      }
+      return this.wrong('这里没有游戏机。')
+    }
+
+    if (day === 4) {
+      if (id === 'rug') {
+        if (!f.key) {
+          f.key = true
+          this.flags = f
+          this.give('key')
+          this.say('掀开地毯，一把小钥匙躺在那儿。')
+        } else this.say('地毯下面只剩灰。')
+        return
+      }
+      if (id === 'radio') {
+        if (!f.radio) {
+          f.radio = true
+          this.flags = f
+          this.say('收音机放起音乐，妈妈跟着哼歌，转过身去了。')
+        } else this.say('音乐还在放。')
+        return
+      }
+      if (id === 'handbag') {
+        if (!f.radio) {
+          this.say('妈妈手边就是包，现在伸手会吵醒她。')
+          this.sus(1)
+        } else if (this.selected === 'key') {
+          this.winLevel('钥匙打开小锁，游戏机就在手提包夹层！')
+        } else this.say('包上挂着一把小锁，需要钥匙。')
+        return
+      }
+      return this.wrong('这里没有游戏机。')
+    }
+  }
+}
+</script>

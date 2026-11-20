@@ -1,0 +1,45 @@
+{
+  "package": "com.dshgo.hidden",
+  "name": "藏游戏机",
+  "icon": "/assets/images/logo.png",
+  "versionName": "3.0.1",
+  "versionCode": 18,
+  "minPlatformVersion": 1070,
+  "deviceTypeList": [
+    "watch-square"
+  ],
+  "appCategory": [
+    "games"
+  ],
+  "config": {
+    "designWidth": 390
+  },
+  "display": {
+    "backgroundColor": "#FBF4E4"
+  },
+  "router": {
+    "entry": "pages/Home",
+    "pages": {
+      "pages/Home": {
+        "component": "index"
+      },
+      "pages/Game": {
+        "component": "index"
+      }
+    }
+  },
+  "distrubuteRules": {
+    "minAPILevel": 1
+  },
+  "features": [
+    {
+      "name": "system.device"
+    },
+    {
+      "name": "system.storage"
+    },
+    {
+      "name": "system.vibrator"
+    }
+  ]
+}

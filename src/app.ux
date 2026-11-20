@@ -1,0 +1,28 @@
+<template>
+  <div class="app">
+    <slot></slot>
+  </div>
+</template>
+
+<style>
+  .app {
+    width: 100%;
+    height: 100%;
+    background-color: #FDF3E3;
+  }
+</style>
+
+<script>
+  export default {
+    onCreate() {
+      console.info('[hidden-game] onCreate')
+    },
+    onError(err) {
+      const detail = err && err.message ? err.message : err
+      console.error('[hidden-game] error: ' + detail)
+    },
+    onDestroy() {
+      console.info('[hidden-game] onDestroy')
+    }
+  }
+</script>
